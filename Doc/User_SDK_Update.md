@@ -1,27 +1,31 @@
-# Migration of One Series of SDK Accounts
+# Migration from 1.x SDK
 
-Upgrade after the login
+If you are using 1.x SDK, you need to migrate user accounts. If not, please ignore this section.
+
+## Check User Upgrade
+
+Check if you need to upgrade user.
+
+**Declaration**
 
 ```java
-/**
-* Check to determine whether the user data needs to be upgraded
-*
-* @return
-*/
 boolean checkVersionUpgrade();
+```
 
-/**
-* Upgrade the account.
-/
+**Example**
+
+```java
+WiserHomeSdk.getUserInstance().checkVersionUpgrade();
+```
+
+## Upgrade Account
+**Declaration**
+
+```java
 void upgradeVersion(IResultCallback callback);
+```
+**Example**
 
-/**
-*	Check upgrade
-*/
-WiserHomeSdk.getUserInstance().checkVersionUpgrade()
-
-/**
-*	Upgrade the user account.
-*/
-WiserHomeSdk.getUserInstance().upgradeVersion()
+```java
+WiserHomeSdk.getUserInstance().upgradeVersion ()
 ```

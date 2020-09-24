@@ -1,50 +1,59 @@
-# Modifying Remark Name
+# Modify Note Name
 
-## (1) Modifying the remark name of the person issuing the sharing information
+## Modify the nickname of the active sharer
 
-**[Description]**
+The sharer modifies the remark name of the person being shared. If you share the device with other people, you can modify the remark name of the person.
 
-The sharer modifies the remark name of the person issuing the sharing information (i.e., if you receive the device shared by other users, you can modify their remark names. (sharing information issued)
+**Declaration**
 
-**[Code Invocation]**
 ```java
-* @param memberId     user member Id (obtained from SharedUserInfoBean)
-* @param name   			  remark name to be modified
 void renameShareNickname(long memberId, String name, IResultCallback callback);
 ```
-**[Example Codes]**
+
+**Parameters**
+
+| Parameters        | Description                                  |
+| ----------- | ------------------------------------- |
+| memberId | share member id   |
+| name       | new name                                                     |
+| callback | callback, including modification success and failure, cannot be null |
+
+**Example**
+
 ```java
-WiserHomeSdk.getDeviceShareInstance().renameShareNickname(memberId, name, new IResultCallback() {
-    @Override
-    public void onError(String code, String error) {        
-    }
-    @Override
-    public void onSuccess() {
-    }
-})
+WiserHomeSdk.getDeviceShareInstance().renameShareNickname(mRelationId, inputText, new IResultCallback() {
+                @Override
+                public void onError(String s, String s1) {}
+                @Override
+                public void onSuccess() {}
+            });
 ```
-## (2) Modifying the remark name of the person receiving the sharing information**
 
-**[Description]**
 
-The sharer modifies the remark name of the person receiving the sharing information (i.e., if you share a device to others, you can modify their remark names. (sharing information received)
 
-**[Method Invocation]**
+## Modify the Nickname of the Recipient Sharer
+
+**Declaration**
+
 ```java
-* @param memberId     user member Id (obtained from SharedUserInfoBean)
-* @param name    		 remark name to be modified 
 void renameReceivedShareNickname(long memberId, String name, IResultCallback callback);
 ```
-**[Example Codes]**
-```java
-WiserHomeSdk.getDeviceShareInstance().renameReceivedShareNickname(memberId, name, new IResultCallback() {
-    @OverrideWiserHomeSdk.getDeviceShareInstance
-    public void onError(String code, String error) {
-        
-	}
-    @Override
-    public void onSuccess() {
-    }
 
-})
+**Parameters**
+
+| Parameters     | Description |
+| -------- | -------------------------------------- |
+| memberId   | revice share member id                                       |
+| name | new name                                                     |
+| callback | callback, including modification success and failure, cannot be null |
+
+**Example**
+
+```java
+void addShareWithHomeId(homeId, countryCode, userAccount, devIds, new IWiserResultCallback<SharedUserInfoBean>() {
+    @Override
+    public void onSuccess(SharedUserInfoBean bean) {}
+    @Override
+    public void onError(String errorMsg, String errorCode) {}
+});
 ```

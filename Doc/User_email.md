@@ -1,155 +1,172 @@
-# Use email Box Password for Login
+# Email Account
+Wiser Smart provides a login system for email passwords.
+## Email Registration
+There are two interfaces for email registration. First, get the verification code, and then use the verification code and password to register.
 
-Wiser Smart provides the email password login system.
+**Declaration**
 
-## (1) User Email Box Password Registration
+Email registration to get verification code
 
-**[Description]**
-
-User email password registration. 
-
-**[Method Invocation]**
 ```java
+void getRegisterEmailValidateCode (String countryCode, String email, IResultCallback callback);
+```
 
-/**Register your email and obtain the verification code received in the email. 
-* Register your email and obtain the verification code received in the email.
-* @param email
-* @param callback
-*/
+**Parameters**
 
-void getRegisterEmailValidateCode(String countryCode, String email, IResultCallback callback);
+| Parameters | Description |
+| ----------- | ----------------- |
+| countryCode | country code, for example: 86 |
+| email | email |
+| callback | callback |
 
-/** Select a password for your email.
-* @param countryCode Country code
-* @param email       Email account
-* @param passwd      Password
-* @param code        verification code
-* @param callback    Email registration callback interface. 
-*/
-WiserHomeSdk.getUserInstance().registerAccountWithEmail(final String countryCode, final String email, final String passwd, final String code, final IRegisterCallback callback);
+**Declaration**
+
+Email registration to get verification code
+
+```java
+void registerAccountWithEmail (final String countryCode, final String email, final String passwd, final String code, final IRegisterCallback callback);
 
 ```
-**[Example Codes]**
+
+**Parameters**
+
+| Parameters | Description |
+| ----------- | ----------------- |
+| countryCode | country code, for example: 86 |
+| email | email |
+| passwd | password |
+| code | Verification Code |
+| callback | callback |
+
+**Example**
 
 ```java
-// Register your email and obtain the verification code received in the email.
+// Sign up for email verification code
+WiserHomeSdk.getUserInstance().getRegisterEmailValidateCode ("86", "123456@123.com", new IResultCallback () {
+    @Override
+    public void onError (String code, String error) {
+    }
 
-WiserHomeSdk.getUserInstance().getRegisterEmailValidateCode("86","123456@123.com",new IResultCallback() {
-    @Override
-    public void onError(String code, String error) {
-    }
+    @Override
+    public void onSuccess () {
+    }
+});
 
-    @Override
-    public void onSuccess() {
-    }
-} );
+// Email password registration
+WiserHomeSdk.getUserInstance(). registerAccountWithEmail ("86", "123456@123.com", "123456", "5723", new IRegisterCallback () {
+    @Override
+    public void onSuccess (User user) {
+        Toast.makeText (mContext, "Registration succeeded", Toast.LENGTH_SHORT) .show ();
+    }
 
-// Select a password for your email.
-
-WiserHomeSdk.getUserInstance().registerAccountWithEmail("86", "123456@123.com","123456","5723", new IRegisterCallback() {
-    @Override
-    public void onSuccess(User user) {
-        Toast.makeText(mContext, "The registration succeeds.", Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void onError(String code, String error) {
-        Toast.makeText(mContext, "code: " + code + "error:" + error, Toast.LENGTH_SHORT).show();
-    }
+    @Override
+    public void onError (String code, String error) {
+        Toast.makeText (mContext, "code:" + code + "error:" + error, Toast.LENGTH_SHORT) .show ();
+    }
 });
 ```
-**[Note]**
+> Note:
+>
+> Once the account is registered in one country, data cannot currently be migrated to other countries.
 
-- Currently, the data of an account register in one country cannot be migrated to other countries. 
+## Login with Email 
+**Declaration**
 
-## (2) Use email Box Password for Login
+User email password login
 
-**[Description]**
-
-Use email box password for login
-
-**[Method Invocation]**
 ```java
-
-/** Use email box password for login
-* @param email  Email account
-* @param passwd      Password
-*/
 WiserHomeSdk.getUserInstance().loginWithEmail(String countryCode, String email, String passwd, final ILoginCallback callback);
 ```
-**[Example Codes]**
+**Parameters**
+
+|Parameters | Description |
+| ----------- | ----------------- |
+| countryCode | country code, for example: 86 |
+| email | email |
+| passwd | Login password |
+| callback | callback |
+
+**Example**
 
 ```java
-// Use email box password for login
+// mail password login
+WiserHomeSdk.getUserInstance().loginWithEmail("86", "123456@123.com", "123123", new ILoginCallback () {
+    @Override
+    public void onSuccess (User user) {
+        Toast.makeText (mContext, "Login succeeded, username:"). Show ();
+    }
 
-WiserHomeSdk.getUserInstance().loginWithEmail("86", "123456@123.com", "123123", new ILoginCallback() {
-    @Override
-    public void onSuccess(User user) {
-        Toast.makeText(mContext, "Login succeeds, username:").show();
-   }
-
-    @Override
-    public void onError(String code, String error) {
-
-        Toast.makeText(mContext, "code: " + code + "error:" + error, Toast.LENGTH_SHORT).show();
-    }
-
+    @Override
+    public void onError (String code, String error) {
+        Toast.makeText (mContext, "code:" + code + "error:" + error, Toast.LENGTH_SHORT) .show ();
+    }
 });
-
 ```
-## **(3) Reset the Password of User Email Box** 
+## User Email Reset Password
+The user mailbox reset password function is divided into two interfaces, a verification code interface and a password reset interface.
 
-**[Description]**
+**Declaration**
 
-Reset the password of user email box 
+Email recovery password, get verification code
 
-**[Method Invocation]**
 ```java
+WiserHomeSdk.getUserInstance().getEmailValidateCode (String countryCode, final String email, final IValidateCallback callback);
+```
+**Parameters**
 
-// Use your email box to obtain the password to retrieve your password.
-/**
-* @param countryCode Country code
-* @param email       Email account
-* @param callback    Obtain the verification code callback interface. 
-*/
-WiserHomeSdk.getUserInstance().getEmailValidateCode(String countryCode, final String email, final IValidateCallback callback);
+|Parameters | Description |
+| ----------- | ----------------- |
+|countryCode | country code, for example: 86 |
+| email | email |
+| callback | callback |
 
+**Declaration**
 
+Email reset password
 
-/** Reset email box password
-* @param email     User account
-* @param emailCode Verification code received in the email box.
-* @param passwd    New password
-* @param callback  Reset the password callback interface. 
-**/
-WiserHomeSdk.getUserInstance().resetEmailPassword(final String email, final String emailCode, final String passwd, final IResetPasswordCallback callback);
+```java
+WiserHomeSdk.getUserInstance().resetEmailPassword (String countryCode, final String email, final String emailCode, final String passwd, final IResetPasswordCallback callback);
+```
 
-**[Example Codes]**
+**Parameters**
 
-// Use the email box to obtain the verification code.
+| Parameters | Description |
+| ----------- | ----------------- |
+| countryCode | country code, for example: 86 |
+| email | email |
+| emailCode | verification code |
+| passwd | New password |
+| callback | callback |
 
-WiserHomeSdk.getUserInstance().getEmailValidateCode("86", "123456@123.com", new IValidateCallback() {
-    @Override
-    public void onSuccess() {
-        Toast.makeText(mContext, "Obtaining verification code succeeds.", Toast.LENGTH_SHORT).show();
-    }
-    @Override
-    public void onError(String code, String error) {
-        Toast.makeText(mContext, "code: " + code + "error:" + error, Toast.LENGTH_SHORT).show();
-    }
+**Example**
+
+```java
+// Get email verification code
+WiserHomeSdk.getUserInstance().getEmailValidateCode("86", "123456@123.com", new IValidateCallback () {
+    @Override
+    public void onSuccess () {
+        Toast.makeText (mContext, "Success in obtaining verification code", Toast.LENGTH_SHORT) .show ();
+    }
+    @Override
+    public void onError (String code, String error) {
+        Toast.makeText (mContext, "code:" + code + "error:" + error, Toast.LENGTH_SHORT) .show ();
+    }
 });
-
-// Reset password
-
-WiserHomeSdk.getUserInstance().resetEmailPassword("86", "123456@123.com", "123123", new IResetPasswordCallback() {
-    @Override
-    public void onSuccess() {
-        Toast.makeText(mContext, "Retrieve password succeeds.", Toast.LENGTH_SHORT).show();
-    }
-    @Override
-    public void onError(String code, String error) {
-        Toast.makeText(mContext, "code: " + code + "error:" + error, Toast.LENGTH_SHORT).show();
-    }
-
+//reset Password
+WiserHomeSdk.getUserInstance().resetEmailPassword("86", "123456@123.com", "123123", "a12345", new IResetPasswordCallback () {
+    @Override
+    public void onSuccess () {
+        Toast.makeText (mContext, "Successfully retrieved password", Toast.LENGTH_SHORT) .show ();
+    }
+    @Override
+    public void onError (String code, String error) {
+        Toast.makeText (mContext, "code:" + code + "error:" + error, Toast.LENGTH_SHORT) .show ();
+    }
 });
 ```
+
+>[!TIP]
+>
+>After the password is reset, if multiple devices log in to the same account at the same time, other devices will trigger a callback for session failure. Please implement the actions after the callback, such as jumping to the login page.
+>
+>For more information, please refer to the chapter "Handling of Expired Session"

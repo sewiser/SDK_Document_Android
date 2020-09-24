@@ -1,134 +1,123 @@
-## Message Center
+# Push Notification
 
-### Message Push Setting
+## Get Push Notification Status 
 
-#### Gets the current state of the message master switch
+The message push switch is the master switch. In the off state, no messages such as device alarms, home messages, and notification messages can be received.
 
-##### 【Description】
-
-The message push switch is the main switch, and when it is off, it cannot receive any message such as device Alarm, Family, Notify message.
-
-##### 【Method】
+**Declaration**
 
 ```java
-   /**
-     * Gets the message master switch state
-     * @param callback
-     */
-    void getPushStatus(IWiserResultCallback<PushStatusBean> callback);
+void getPushStatus(IWiserResultCallback<PushStatusBean> callback);
 ```
 
-##### 【Example Codes】
+**Parameters**
+
+| Parameters     | Description                    |
+| -------- | ----------------------- |
+| callback | callbacks, including success and failure to get total switch status |
+
+**Example**
 
 ```java
  WiserHomeSdk.getPushInstance().getPushStatus(new IWiserResultCallback<PushStatusBean>() {
-            @Override
-            public void onSuccess(PushStatusBean result) {
-            }
-
-            @Override
-            public void onError(String errorCode, String errorMessage) {
-            }
-        });
+       @Override
+       public void onSuccess(PushStatusBean result) {}
+       @Override
+       public void onError(String errorCode, String errorMessage) {}
+ });
 ```
 
-#### Set the message master switch
 
-##### 【Description】
 
-The message push switch is the main switch, and when it is off, it cannot receive any message such as device Alarm, Family, Notify message.
+## Set Push Notification Status
 
-##### 【Method】
+The message push switch is the master switch, and no messages such as device alarms, home messages, notification messages, etc. can be received in the off state.
+
+**Declaration**
 
 ```java
-    /**
-     * Set the message master switch
-     * @param isOpen Message is Open
-     * @param callback
-     */
-    void setPushStatus(boolean isOpen, IWiserDataCallback<Boolean> callback);
+void setPushStatus(boolean isOpen, IWiserDataCallback<Boolean> callback);
 ```
 
-##### 【Example Codes】
+**Parameters**
+
+| Parameters     | Description                       |
+| -------- | --------------------------- |
+| isOpen   | Whether to open                    |
+| callback | Callbacks, including setting success and failure             |
+
+**Example**
 
 ```java
 WiserHomeSdk.getPushInstance().setPushStatus(open, new IWiserDataCallback<Boolean>() {
-            @Override
-            public void onSuccess(Boolean result) {
-            }
-
-            @Override
-            public void onError(String errorCode, String errorMessage) {
-            }
-        });
+      @Override
+      public void onSuccess(Boolean result) {}
+      @Override
+      public void onError(String errorCode, String errorMessage) {}
+});
 ```
 
 
-#### Gets the on-off state of a message based on its type
 
-##### 【Description】
+## Get the switch status of the message according to the message type
 
-Gets the on-off state of a message based on its type
+Get the switch status of the current type of message according to the message type
 
-##### 【Method】
+**Declaration**
 
 ```java
-  /**
-     *  Gets the on-off state of a message based on its type
-     *  PushType.PUSH_ALARM  Alarm Message
-     *  PushType.PUSH_FAMILY Family Message
-     *  PushType.PUSH_NOTIFY Notify Message
-     * @param type Message type
-     * @param callback
-     */
-    void getPushStatusByType(PushType type, IWiserDataCallback<Boolean> callback);
+void getPushStatusByType(PushType type, IWiserDataCallback<Boolean> callback);
 ```
 
-##### 【Example Codes】
+**Parameters**
+
+| Parameters     | Description                     |
+| -------- | ------------------------ |
+| type     | Message type                |
+| callback | Callbacks, including success and failure |
+
+**Example**
 
 ```java
-    WiserHomeSdk.getPushInstance().getPushStatusByType(type, new IWiserDataCallback<Boolean>() {
-            @Override
-            public void onSuccess(Boolean result) {
-            }
-
-            @Override
-            public void onError(String errorCode, String errorMessage) {
-            }
-        });
+WiserHomeSdk.getPushInstance().getPushStatusByType(type, new IWiserDataCallback<Boolean>() {
+      @Override
+      public void onSuccess(Boolean result) {}
+      @Override
+      public void onError(String errorCode, String errorMessage) {}
+});
 ```
 
-#### Sets the on-off state of a message based on its type
 
-##### 【Description】
 
-Sets the on-off state of a message based on its type
+## Set the switch status of the message according to the message type
 
-##### 【Method】
+Set the switch status of the current type of message according to the message type.
+
+**Declaration**
 
 ```java
-  /**
-     *  Sets the on-off state of a message based on its type
-     *  PushType.PUSH_ALARM  Alarm Message
-     *  PushType.PUSH_FAMILY Family Message
-     *  PushType.PUSH_NOTIFY Notify Message
-     * @param type Message Type
-     * @param isOpen Message is Open
-     * @param callback
-     */
-    void setPushStatusByType(PushType type, isOpen, IWiserDataCallback<Boolean> callback);
+void setPushStatusByType(PushType type, isOpen, IWiserDataCallback<Boolean> callback);
 ```
 
-##### 【Example Codes】
+**Parameter**
+
+| Parameter     | Description                     |
+| -------- | ------------------------ |
+| type     | Message type                 |
+| isOpen     | Whether to open                 |
+| callback | Callbacks, including success and failure |
+
+**Example**
 
 ```java
-        WiserHomeSdk.getPushInstance().setPushStatusByType(pushType, checked, new IWiserDataCallback<Boolean>() {
-            @Override
-            public void onSuccess(Boolean result) {
-            }
+WiserHomeSdk.getPushInstance().setPushStatusByType(pushType, checked, new IWiserDataCallback<Boolean>() {
+      @Override
+      public void onSuccess(Boolean result) {
+      }
 
-            @Override
-            public void onError(String errorCode, String errorMessage) {
-            }
-        });
+      @Override
+      public void onError(String errorCode, String errorMessage) {
+      }
+});
 ```
+

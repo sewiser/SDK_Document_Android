@@ -1,185 +1,290 @@
-# <span id ="Smart">Smart</span>
+# <span id ="Smart"> Smart </span>
 
-## Brief Introduction
+Smart are divided into "one-click execution scene" and "automated scene", hereinafter referred to as "scene" and "automation", respectively.
 
-Smart divides into scene or automation actions. Scene is a condition that users add actions and it is triggered manually; automation action is a condition set by users, and the set action is automatically executed when the condition is triggered.
+Scene is user-added actions that is triggered manually; automation is that the user sets conditions and automatically executes the set actions when the conditions trigger.
 
-In the Wiser smart Android SDK, smart includes the unified management interface of scene and automation actions, 
+Wiser Cloud supports users to set weather or equipment conditions according to actual life scene, and when the conditions are met, let one or more devices perform the corresponding tasks.
 
-`WiserHomeSdk.WiserHomeSdk.getSceneManagerInstance() `
+| Scene Management | Description |
+| -------------- | ---------- |
+|  WiserHomeSdk.newSceneInstance(String sceneId)   |   Provides editing, deletion, and execution of a single scene, which needs to be initialized with the scene id. The scene id refers to the id field of SceneBean, which can be obtained from the return result of the [Get Scene List interface](#GetSceneList). |
+|WiserHomeSdk.getSceneManagerInstance()| It mainly provides all the data related to the conditions, tasks, equipment, and cities in the scene, and the scene list data acquisition.|
 
-and the independent operation interface
 
-` WiserHomeSdk.newSceneInstance(String sceneId)`, The independent operation interface needs to be initialized with the scene id. The scene id can be obtained in the result of [obtaining the scene list interface.](#ObtainSceneList)
 
-**In the following documents, manual scene and automated scene are simply referred to as scene.**
+Before using intelligent scene-related interfaces, you need to understand the two concepts of scene conditions and scene tasks.
 
-## <span id="ObtainSceneList">Obtain scene list</span>
+## Scene Condition
 
-**[Description]**
+Scene conditions correspond to the SceneCondition class. Wiser Cloud supports the following condition types:
 
-Get the scene list, which can be used when the scene home page is initialized. Determine the manual scene and automation actions through SceneBean's getConditions(); the value is empty when it is a manual scene.
+- Meteorological conditions: including temperature, humidity, weather, PM2.5, air quality, sunset and sunrise. When the user selects meteorological conditions, he can select the current city.
+- Equipment condition: It means that the user can select the functional status of a device in advance. When the device reaches this state, the task in the current scene will be triggered, but the same device cannot be used as a condition and task at the same time to avoid operation conflicts.
+- Timing condition: It means that the scheduled task can be performed according to the specified time.
 
-**[Method Prototype]**
+## Scene Task
+
+
+A scenario task refers to having one or more devices perform certain operations when the scenario meets the set weather or equipment conditions, corresponding to the `SceneTask` class. Or turn off and on an automation.
+
+## Smart Scene Management
+
+### <span id="GetSceneList">Scene List Function</span>
+
+
+**Declaration**
+
+
+Get scene list data. Scenarios are returned with automation, and scenarios and automation are distinguished by whether the conditions field is empty.
 
 ```java
-/**
- * Obtain scene list
- * @param callback
- */
-public void getSceneList(IWiserDataCallback<List<SceneBean>> callback)
+void getSceneList(long homeId,IWiserDataCallback<List<SceneBean>> callback)
 ```
+**Parameters**
 
-Among, the interface of `SceneBean` is defined as follows
-
-```java
-/**
-  * Obtain scene id
-  * @returnScene id
- */
-public String getId()
-
-/**
-  * Obtain scene name
-  * @returnScene name
- */
-public String getName()
-
-/**
-  *  Obtain scene conditions 
-  * @returnScene condition
- */
-public List<SceneCondition> getConditions()
-
-/**
-  *  Obtain scene task
-  * @returnScene task
- */
-public List<SceneTask> getActions()
-
-/**
-  * Obtain scene id
-  * @return Scene id
- */
-public String getId()
+| Parameter | Description |
+| ----------- | ----------------------------------------------- |
+| homeId | Home id                           |                                   |
+| callback    | Callback |
 
 
-```
 
-**[Example Codes]**
+Among them, the main attributes of `SceneBean` are defined as follows
+
+|Field|Type| Description |
+| ------ | ------ | ----------- |
+| id |Sting| Scene  id 
+| name |String| Scene name
+| conditions | List&lt;SceneCondition&gt; | Scene condition list
+| actions | List&lt;SceneTask&gt; | Scene task list
+| matchType | int | The type that satisfies the condition. Any condition is 1 and all conditions are 2
+| enable | boolean | Whether automation is enabled
+
+
+
+**Example**
 
 ```java
-WiserHomeSdk.getSceneManagerInstance().getSceneList(new IWiserResultCallback<List<SceneBean>>() {
-      @Override
-      public void onSuccess(List<SceneBean> result) {
-      }
+WiserHomeSdk.getSceneManagerInstance().getSceneList(long homeId, new IWiserResultCallback<List<SceneBean>>() {
+    @Override
+    public void onSuccess(List<SceneBean> result) {
+    }
 
-      @Override
-      public void onError(String errorCode, String errorMessage) {
-      }
+    @Override
+    public void onError(String errorCode, String errorMessage) {
+    }
 });
 ```
-**Automation condition**
 
-User's configurable conditions include weather conditions, device status and timer.
 
-- Weather type
+### Get Condition List
 
-Weather conditions include temperature, humidity, weather, PM2.5, air quality, sunrise and sunset, and cities can be freely selected. The weather conditions that can be selected differently depending on the device in the user account.
+**Declaration**
 
-```java
-/**
-  * Create weather conditions
-  *
-  * @param place weather city 
-  * @param type condition type
-  * @param rule  condition regulations
-  * @return
- */
- public static SceneCondition createWeatherCondition(
-      PlaceFacadeBean place, 
-      String type,
-      Rule rule)
-```
-Note: The PlaceFacadeBean class object is obtained from the [Obtain City List](#citylist),[Obtain City By Altitude And Longitude](#ObtainCityAltitudeLongitude) and [Obtain City By City ID](#ObtainCityById) interface. Currently, the acquired urban interface only supports domestic cities.
+Get a list of conditions, such as temperature, humidity, weather, PM2.5, sunset and sunrise, etc. Note: the device can also be used as a condition.
+The temperature in the conditions is divided into degrees Celsius and Fahrenheit, and the required data is passed in as required.
 
-- Device type
-
-A device condition is a scheduled task for another device or devices triggered by a device which is in a certain state. **The same device cannot be used as both a condition and a task to avoid cycle control.**
 
 ```java
-/**
-  * Create device type conditions
-  *
-  * @param devBean  condition device
-  * @param dpId    condition dpId
-  * @param rule    condition regulations
-  * @return
- */
-public static SceneCondition createDevCondition(
-      SceneDevBean devBean,
-      String dpId,
-      Rule rule) 
+void getConditionList(boolean showFahrenheit,IWiserResultCallback<List<ConditionListBean>> callback);
 ```
-Note: SceneDevBean class object can be obtained from the interface of [Obtain the condition device list](#ObtainConditionDeviceList).
+**Parameters**
 
-- Timer
+| Parameter | Description |
+| ------ | ----- |
+| showFahrenheit |True:Fahrenheit units，False:Celsius units|
+| callback |Callback |
 
-Timer refers that the scheduled task can be executed when the specified time is reached.
+**Example**
 
 ```java
-/**
-   * Create timer conditions
-   * @param display is used to display the user-selected time conditions.
-   * @param name  Name of Timer condition
-   * @param type condition type
-   * @param rule  condition regulations
-   * @return
-  */
-  public static SceneCondition createTimerCondition(String display,String name,String type,Rule rule)
+WiserHomeSdk.getSceneManagerInstance().getConditionList(new IWiserDataCallback<List<ConditionListBean>>() {
+    @Override
+    public void onSuccess(List<ConditionListBean> conditionActionBeans) {
+    }
+
+    @Override
+    public void onError(String errorCode, String errorMessage) {
+    }
+});
+
 ```
-#### <span id="rules">There are four rules for rule-condition rules:</span>
+
+Among them, the main attributes of ConditionListBean are defined as follows
+
+|Field|Type| Description |
+| ------ | ------ | ----------- |
+| name |Sting| Condition name
+| type |String| Condition category
+| Property | IProperty | Condition attribute
+
+
+
+Currently supported weather condition categories with their names and Property types
+	
+| name     | Type       | Property Type |
+| -------- | ---------- | ------------- |
+| Temperature     | temp       | ValueProperty |
+| Humidity     | humidity   | EnumProperty  |
+| Weather     | condition  | EnumProperty  |
+| PM2.5    | pm25       | EnumProperty  |
+| Air Quality | aqi        | EnumProperty   |
+| Sunset/Sunrise | sunsetrise | EnumProperty  |
+| Timer     | timer      | TimerProperty |
+
+Property is a commonly used data structure in Wiser Smart, which can be used to control equipment and other functions. There are currently four types of Property: Numeric, Enumerated, Boolean, and Types for Timing (corresponding to Numeric, Enumerated, and Boolean in conditions). Each Property provides different access interfaces. See [Rules Introduction](#rules) for details.	
+
+
+
+### Create Weather Conditions
+
+**Declaration**
+
+
+Weather conditions include temperature, humidity, weather, PM2.5, air quality, sunrise and sunset, and the city can be selected freely. The weather conditions that can be selected vary depending on the device in the user account.
+
+```java
+SceneCondition createWeatherCondition(PlaceFacadeBean place, String type, Rule rule)
+```
+**Parameters**
+
+
+| Parameter | Description |
+| ----------- | ----------------------------------------------- |
+| place | Corresponding city weather. PlaceFacadeBean objects can be obtained from [Get City List](#GetCityList), [Get cities based on latitude and longitude](#GetCityInfoByLATLNG), [Get cities based on city id](#GetCityByCityId) interface. Currently, access to the city interface is only supported China.                           |
+| type | Condition type.                                     |
+| rule    | Conditional rules, see [rule introduction](#rules)|
+
+
+**Example**
+
+```java
+ ValueRule tempRule = ValueRule.newInstance(
+      "temp", 
+      ">",    
+      20       
+  );
+SceneCondition tempCondition = SceneCondition.createWeatherCondition(
+      placeFacadeBean,   
+      "temp",            
+      tempRule          
+  );
+```
+
+
+### Create a Device-type Condition
+
+**Declaration**
+
+A device condition is when one device is in a certain state that triggers a scheduled task for another device or multiple devices. <strong> To avoid loop control, the same device cannot be used as a condition and task at the same time. </strong>
+
+```java
+SceneCondition createDevCondition(DeviceBean devBean, String dpId, Rule rule) 
+```
+**Parameters**
+
+| Parameter | Description |                                           
+| ----------- | ----------------------------------------------- |
+| devBean | Conditional equipment. DeviceBean is obtained from the [Get Condition Device List](#GetConditionDeviceList) interface                           
+| dpId | Condition dpId。                                      |
+| rule    | Condition rule |
+
+**Example**
+
+```java
+BoolRule boolRule = BoolRule.newInstance(
+    "dp1",    //"dp" + dpId
+    true    //value
+);
+SceneCondition devCondition = SceneCondition.createDevCondition(
+    devBean,    
+    "1",        //dpId
+    boolRule    //rule
+);
+SceneCondition createDevCondition(DeviceBean devBean, String dpId, Rule rule) 
+
+```
+
+### Create Timing Type Conditions
+
+**Declaration**
+
+
+Timing conditions refer to the execution of a scheduled task at a specified time 
+
+```java
+SceneCondition createTimerCondition(String display,String name,String type,Rule rule)
+```
+
+**Parameters**
+
+| Parameter        | Description                                            
+| ----------- | ----------------------------------------------- |
+| display | User-selected time condition for display                        
+| name | Name of timing condition                                     
+| type    | Condition type|
+| rule    | Conditional rules|
+
+**Example**
+
+
+```java
+TimerRule timerRule = TimerRule.newInstance("Asia/Shanghai","0111110","16:00","20180310")
+SceneCondition.createTimerCondition(
+      "Monday, Tuesday, Wednesday, Thursday, Friday",
+      "Working day timing",
+      "timer",
+      timerRule
+      )
+```
+
+### <span id="rules">There Are Four Types of Rules</span>
+
 
 - Numerical type
 
 Taking temperature as an example, the final expression of the numerical condition is formatted as "temp > 20". You can get the currently supported temperature maximum, minimum and granularity (stepping) from the Obtain Condition List interface; you can get the supported temperature from the Obtain Condition List, etc. After the configuration is completed on the user interface, the `ValueRule.newInstance` method is invoked to build the rules, and the rules are used to form the conditions.
 
-For example:
+**Example**
 
 ```java
- ValueProperty tempProperty = (ValueProperty) conditionListBean.getProperty();       //Numeric Property
-
-
- int max = tempProperty.getMax();       //Maximum value
- int min = tempProperty.getMin();       //Minimum value
- int step = tempProperty.getStep();     //Granularity
- String unit = tempProperty.getUnit();  //Unit
- //The temperature is greater than 20 ℃
- ValueRule tempRule = ValueRule.newInstance(
-       "temp",  //Category
-       ">",     //operational rule (">", "==", "<")
-       20       //Critical value
- ); 
- SceneCondition tempCondition = SceneCondition.createWeatherCondition(
-       placeFacadeBean,   //City
-       “temp",            //Category
-       tempRule           //Rule
- );
+	
+  ValueProperty tempProperty = (ValueProperty) conditionListBean.getProperty();       
+	
+  int max = tempProperty.getMax();       //Maximum value
+  int min = tempProperty.getMin();       //Minimum value
+  int step = tempProperty.getStep();     //Granularity
+  String unit = tempProperty.getUnit();  //Unit
+	
+//The temperature is greater than 20 ℃
+  ValueRule tempRule = ValueRule.newInstance(
+      "temp",  //Category
+      ">",     //operational rule (">", "==", "<")
+      20       //Critical value
+  ); 
+SceneCondition tempCondition = SceneCondition.createWeatherCondition(
+      placeFacadeBean,   //City
+      "temp",            //Category
+      tempRule           //Rule
+  );
 ```
+
+​	  
+
 - Enumerated type
 
-Taking the weather condition as an example, the final expression of the enumerated condition is formatted as "condition == rainy". You can get the currently supported weather conditions from the Obtain Condition List interface, including the code and name of each weather condition. After the configuration is completed on the user interface, the EnumRule.newInstancemethod is invoked to build the rules, and the rules are used to form the conditions.
+Taking the weather condition as an example, the final expression of the enumerated condition is formatted as "condition == rainy". You can get the currently supported weather conditions from the Obtain Condition List interface, including the code and name of each weather condition. After the configuration is completed on the user interface, the  `EnumRule.newInstance` method is invoked to build the rules, and the rules are used to form the conditions.
 
-For example:
+**Example**
 
- ```java
- EnumProperty weatherProperty = (EnumProperty) conditionListBean.getProperty();  //Enumeration type Property
-
+```java
+EnumProperty weatherProperty = (EnumProperty) conditionListBean.getProperty();  //Enumeration type Property
 /** 
- {
-      {"sunny", " fine day"},
-      {"rainy", "rainy day"}
- } 
+ *{
+ *  {"sunny", " fine day"},
+ *  {"rainy", "rainy day"}
+ *} 
  */
  HashMap<Object, String> enums = weatherProperty.getEnums();
  //It's rainy.
@@ -191,15 +296,21 @@ For example:
                placeFacadeBean,    //City
                "condition",        //Category
                enumRule            //Rule 
- );
- ```
+ );	
+```
+
+
 - Boolean type
 
-Boolean types are common in device type conditions, and the final expression is formatted as "dp1 == true". You need to invoke the [Obtain the condition device list](#ObtainConditionDeviceList) interface to obtain devices that support the configuration of the smart scene, and then query the operations that the device can support based on the device id. See the Obtain Operations Supported by Device for details. After the configuration is completed on the user interface, the BoolRule.newInstancemethod is invoked to build the rules, and the rules are used to form the conditions.
+Boolean types are common in device type conditions, and the final expression is formatted as "dp1 == true". You need to invoke the [Obtain the condition device list](#GetConditionDeviceList) interface to obtain devices that support the configuration of the smart scene, and then query the operations that the device can support based on the device id. See the Obtain Operations Supported by Device for details. After the configuration is completed on the user interface, the `BoolRule.newInstance` method is invoked to build the rules, and the rules are used to form the conditions.
 
-For example:
+**Example**
+	
+
 ```java
-BoolProperty devProperty = (BoolProperty) conditionListBean.getProperty();  //Boolean type Property
+	
+BoolProperty devProperty = (BoolProperty) conditionListBean.getProperty();  //布尔型Property
+	
 /**
 {
   {true, “on"},
@@ -207,436 +318,300 @@ BoolProperty devProperty = (BoolProperty) conditionListBean.getProperty();  //Bo
 }
 */
 HashMap<Boolean, String> boolMap = devProperty.getBoolMap(); 
-
-//When the device starts.
+	
+//当设备开启时
 BoolRule boolRule = BoolRule.newInstance(
-      "dp1",    //"dp" + dpId
-      true    //bool of triggering conditions
+    "dp1",    //"dp" + dpId
+    true    //bool of triggering conditions
 );
 SceneCondition devCondition = SceneCondition.createDevCondition(
-      devBean,    //Device 
-      "1",        //dpId
-      boolRule    //Rule 
+    devBean,    //Device 
+    "1",        //dpId
+    boolRule    //Rule
 );
+	
 ```
+
 - Timer type
 
 Timer is expressed as a Map type, that is Key: Value. After the user completes the timer configuration, the `TimerRule.newInstance` is invoked to complete the Map data assembly by the SDK to form the rule condition.
 
-For example:
+**Example**
+
 
 ```java
-
-TimerProperty timerProperty = (TimerProperty)conditionListBean.
- getProperty();	//Timer-type property
-
-
- //TimerRule.newInstance provides two construction methods, the difference is whether it will pass the time zone.
- //If it does not pass the time zone, read default time zone.
- /**
-   * 
-   * @param timeZoneId time zone, the format like "Asia/Shanghai”
-   * @param loops 7-digit character string; each digit represents what day of the week; the first digit represents Sunday, and the second digit represents Monday.
-   * By analogy, the character indicates on which days the timer is enabled. 0 indicates not selected; 1 indicates selected, with format like only Monday Selected.
-   * Tuesday: "0110000"。 If they are not selected, it means that the timer is only executed once, with the format: "0000000"
-   * @param time 24-hour system With format like "08:00", 
-   * If the user uses the 12-hour system, the developer needs to convert it to a 24-hour system and upload it.
-   * @param date, format like "20180310"
-   * @return
-  */
-
-public static TimerRule newInstance(String timeZoneId,String loops,String time,String date);
-
- //Create timer rule
- TimerRule timerRule = TimerRule.newInstance("Asia/Shanghai","0111110","16:00","20180310")
-
- /**
-
-   * The required parameters have the same meaning as the parameters of the above method, and the default time zone is read.
-   * @param loops
-   * @param time
-   * @param date
-   * @return
-  */
- public static TimerRule newInstance(String loops,String time,String date);
-
- 
-
- /**
-   * Create timer conditions
-   * @param display  is used to display the user-selected time conditions.
-   * @param name  Name of Timer condition
-   * @param type condition type
-   * @param rule  condition regulations
-   * @return
-  */
-
- public static SceneCondition createTimerCondition(String display,String name,String type,Rule rule);
-
- 
-
- //Create timer conditions, taking the Timer rule constructed above as an example.
-
- SceneCondition.createTimerCondition(
-
- "Monday, Tuesday, Wednesday, Thursday & Friday",
-
- “Timer in work day",
-
- "timer",
-
- timerRule
-
- )
-
-
-```
-
-### Obtain condition list
-
-**[Interface Description]**
-
-It can be used to get a list of conditions that are currently supported by the user, as a first step in adding or modifying conditions usually.
-
-**[Method Prototype]**
-
-```java
-/**
-  * Obtain condition list
-  * @param showFahrenheit shows Fahrenheit degree or not
-  * @param callback
- */
-void getConditionList(boolean showFahrenheit,IWiserResultCallback<List<ConditionListBean>> callback);
-Among,  the interface provided by ConditionListBean is
-/**
-  * Obtain condition category
-  *
-  * @return category [1]
- */
-public String getType() {
-      return type;
-}·
-
-/**
-  * Obtain condition name
-  *
-  * @return name 
- */
-public String getName() {
-      return name;
-}
-/**
-  * Obtain Property [2]
-  *
-  * @return Property 
- */
-public IProperty getProperty() {
-      return property;
-} 
-```
-**Note:**
-
-1.Currently supported weather condition categories, names and Property types
-
-| **Description**  | **Type**   | **Property Type** |
-| ---------------- | ---------- | ----------------- |
-| Temperature      | Temp       | ValueProperty     |
-| Humidity         | humidity   | EnumProperty      |
-| Weather          | condition  | EnumProperty      |
-| PM2.5            | pm25       | EnumProperty      |
-| Air quality      | aqi        | EnumProperty      |
-| Sunrise & sunset | sunsetrise | EnumProperty      |
-| Timer            | timer      | TimerProperty     |
 	
-2.Property is a commonly used data structure in Wiser smart to control devices and other functions. Currently, four properties are available: Numerical Type, Enumerated Type, Boolean Type, and Timer Type (corresponding to Value, Enum and Boolean in the condition), each property is provided with a different access interface. See the [rules introduction section](#rules) above for details.
-
-**[Example Codes]**
-
-```java
-
-WiserHomeSdk.getSceneManagerInstance().getConditionList(new IWiserDataCallback<List<ConditionListBean>>() {
-      @Override
-      public void onSuccess(List<ConditionListBean> conditionActionBeans) {
-      }
-      @Override
-      public void onError(String errorCode, String errorMessage) {
-      }
-});
-
-```
-### <span id="ObtainConditionDeviceList">Obtain the condition device list</span>
-
-**[Description]**
-
-Obtain a list of devices that can be used for conditional settings.
-
-**[Method Prototype]**
-
-```java
+	
+TimerProperty timerProperty = (TimerProperty)conditionListBean.
+getProperty();	//Timer-type property
+	
+//TimerRule.newInstance provides two construction methods, the difference is whether it will pass the time zone.
+//If it does not pass the time zone, read default time zone.
 /**
-  * Obtain a list of optional devices in the condition
-  * @param homeId Home id
-  * @param callback
+  * 
+  * @param timeZoneId time zone, the format like "Asia/Shanghai”
+  * @param loops 7-digit character string; each digit represents what day of the week; the first digit represents Sunday, and the second digit represents Monday.
+  * By analogy, the character indicates on which days the timer is enabled. 0 indicates not selected; 1 indicates selected, with format like only Monday Selected.
+  * Tuesday: "0110000"。 If they are not selected, it means that the timer is only executed once, with the format: "0000000"
+  * @param time 24-hour system With format like "08:00", 
+  * If the user uses the 12-hour system, the developer needs to convert it to a 24-hour system and upload it.
+  * @param date, format like "20180310"
+  * @return
  */
-
-void getConditionDevList(long homeId, IWiserResultCallback<List<DeviceBean>> callback);
-
+public static TimerRule newInstance(String timeZoneId,String loops,String time,String date);
+  
+//Create timer rule
+TimerRule timerRule = TimerRule.newInstance("Asia/Shanghai","0111110","16:00","20180310") 
+	
+/**
+ * The required parameters have the same meaning as the parameters of the above method, and the default time zone is read.
+ * @param loops
+ * @param time
+ * @param date
+ * @return
+*/
+public static TimerRule newInstance(String loops,String time,String date);
+  
+/**
+  * Create timer conditions
+  * @param display  is used to display the user-selected time conditions.
+  * @param name  Name of Timer condition
+  * @param type condition type
+  * @param rule  condition regulations
+  * @return
+ */
+public static SceneCondition createTimerCondition(String display,String name,String type,Rule rule);
+  
+//Create timer conditions, taking the Timer rule constructed above as an example.
+SceneCondition.createTimerCondition(
+"Monday, Tuesday, Wednesday, Thursday & Friday",
+“Timer in work day",
+"timer",
+timerRule
+)
+	
 ```
-**[Example Codes]**  
+
+### <span id="GetConditionDeviceList">Obtain The Condition Device List</span>
+
+**Declaration**
+
+
+When selecting a scene condition, a device is selected, and a device dp list needs to be obtained according to the deviceId of the selected device, and then a certain dp function point is selected, that is, the device is designated to execute the dp function as the execution condition of the scene.
+
+
+```java
+void getConditionDevList(long homeId, IWiserResultCallback<List<DeviceBean>> callback);
+```
+
+**Parameters**
+
+| Parameter        | Description                                              |
+| ----------- | ----------------------------------------------- |
+| homeId | home id                       
+| callback | callback                                    |
+
+
+**Example**
 
 ```java
 WiserHomeSdk.getSceneManagerInstance().getConditionDevList(homeId ,new IWiserResultCallback<List<DeviceBean>>() {
-      @Override
-      public void onSuccess(List<DeviceBean> deviceBeans) {
-      }
-      @Override
-      public void onError(String errorCode, String errorMessage) {
-      }
+    @Override
+    public void onSuccess(List<DeviceBean> deviceBeans) {
+    }
+
+    @Override
+    public void onError(String errorCode, String errorMessage) {
+    }
 });
 ```
-### Obtain device tasks based on device id 
 
-**[Description]**
+### Get Device Task Based On Device Id
 
-It is used to obtain the tasks that can be selected when selecting the specific trigger conditions of the device.
+**Declaration**
 
-
-**[Method Prototype]**
+It is used to obtain tasks that can be selected when selecting specific trigger conditions of the device.
 
 ```java
-  /**
-     * Obtain a list of task conditions supported by the device
-     *
-     * @param devId    device id
-     * @param callback
-     */
-      void getDeviceConditionOperationList(String devId, IWiserResultCallback<List<TaskListBean>> callback);
+void getDeviceConditionOperationList(String devId,IWiserResultCallback<List<TaskListBean>> callback);
 ```
+**Parameters**
 
-Among, `TaskListBean` provides the following interfaces:
+| Parameter        | Description                                           
+| ----------- | ----------------------------------------------- |
+| devId | device id                       
+| callback | callback                                     |
 
-```java
-/**
- *  obtain the name of dp points for display interface.
- *
- * @return name of dp points
- */
-public String getName() {
-      return name;
-}
+**Example**
 
-/**
- *  Obtain dpId
- *
- * @return dpId
- */
-public long getDpId() {
-      return dpId;
-}
 
-/**
- * Obtain the operation configured by the dp point
- *
- *   Format:
- *     {
- *       {true, “on"},
- *       {false, "off"}
- *     {
- *
- * @return 
-
- */
-public HashMap<Object, String> getTasks() {
-      return tasks;
-}
-/**
- * Obtain the type bool, value, enum, etc. of the condition. 
- */
-public String getType() {
-      return type;
-}
-```
-**[Example Codes]**
 ```java
 WiserHomeSdk.getSceneManagerInstance().getDeviceConditionOperationList(
-      devId, //Device id
-      new IWiserDataCallback<List<TaskListBean>>() {
-          @Override
-          public void onSuccess(List<TaskListBean> conditionActionBeans) {
-          }
-          @Override
-          public void onError(String errorCode, String errorMessage) {
-          }
+    devId, //device id
+    new IWiserDataCallback<List<TaskListBean>>() {
+        @Override
+        public void onSuccess(List<TaskListBean> conditionActionBeans) {
+        }
+
+        @Override
+        public void onError(String errorCode, String errorMessage) {
+        }
 });
 }
 ```
-### <span id="citylist">Obtain the city list</span>
 
-**[Description]**
+Among them, `TaskListBean` main attribute definition:
 
-It is used to select a city when creating weather conditions. Note: Only Chinese cities are supported in the current city list for the time being.
+|Field|Type| Description |
+| ------ | ------ | ----------- |
+| name |Sting| dp point name for interface display
+| dpId |long| deivce dpId
+| tasks | HashMap&lt;Object, String&gt;  | dp point configurable operation, format: {true, "opened"}, {false, "closed"}
+| type | String  | Condition type bool, value, enum, etc.
 
-**[Method Prototype]**
+
+
+### <span id="GetCityList">Get City List</span>
+
+**Declaration**
+
+
+Used to select cities when creating weather conditions.
+Note: Currently the city list only supports China.
 
 ```java
-
-/**
- Obtain the city list according to the country code.
- *
- * @param countryCode Country code
- * @param callback    callback
- */
 void getCityListByCountryCode(String countryCode, IWiserResultCallback<List<PlaceFacadeBean>> callback);
-
 ```
 
-Among, PlaceFacadeBean category provides interfaces as follows:
+**Parameters**
+
+| Parameter        | Description  
+| ----------- | ----------------------------------------------- |
+| countryCode | Country code , China = "cn"                  
+| callback | callback                                     |
+
+**Example**
 
 ```java
-/**
- * Obtain area name
- *
- * @return Area name
- */
-public String getArea() {
-      return area;
-}
 
-/**
- * Obtain name of province
- *
- * @return province name 
- */
-public String getProvince() {
-      return province;
-}
-/**
- * Obtain the city name
- *
- * @return city name 
- */
-public String getCity() {
-      return city;
-}
-
-/**
- * Obtain the city id
- *
- * @return city id
- */
-public long getCityId() {
-      return cityId;
-}
-```
-**[Example Codes]**
-```java
 WiserHomeSdk.getSceneManagerInstance().getCityListByCountryCode(
-  	"cn",  //China 
-  	new IWiserResultCallback<List<PlaceFacadeBean>>() {
-      	@Override
-      	public void onSuccess(List<PlaceFacadeBean> placeFacadeBeans) {
+	"cn",  //China
+	new IWiserResultCallback<List<PlaceFacadeBean>>() {
+    	@Override
+    	public void onSuccess(List<PlaceFacadeBean> placeFacadeBeans) {
+    	}
 
-      	}
-      	@Override
-      	public void onError(String errorCode, String errorMessage) {
-
-      	}
+    	@Override
+    	public void onError(String errorCode, String errorMessage) {
+    	}
 });
+
 ```
-### <span id="ObtainCityById">Obtain the city information according to the city id.</span>
 
-**[Description]**
+Among them, the main properties of the `PlaceFacadeBean` class are defined as follows:
 
-Obtain the city information according to the city id to display existing weather conditions. City id can be obtained from the [Obtain City List](#citylist) interface.
+|Field|Type| Description |
+| ------ | ------ | ----------- |
+| area |Sting| area name
+| province | String | province name
+| city | String | city name
+| cityId | long  | cityId
 
-**[Method Prototype]**
+
+
+### <span id="GetCityInfoByLATLNG">Get Cities Based On Latitude and Longitude</span>
+
+**Declaration**
+
+The city information is obtained according to the latitude and longitude, and is used to display the existing weather conditions.
+
 ```java
-/**
- * Obtain the city information according to the city id.
- *
- * @param cityId   cityid{@link PlaceFacadeBean}
- * @param callback
- */
-void getCityByCityIndex(long cityId, IWiserResultCallback<PlaceFacadeBean> callback);
-```
-**[Example Codes]**
-```java
-WiserHomeSdk.getSceneManagerInstance().getCityByCityIndex(
-  	cityId, //City id
-  	new IWiserResultCallback<PlaceFacadeBean>() {
-  		@Override
-  		public void onSuccess(PlaceFacadeBean placeFacadeBean) {
-
-  		}
-
-  		@Override
-  		public void onError(String errorCode, String errorMessage) {
-
-  		}
-
-});
-```
-### <span id="ObtainCityAltitudeLongitude">Obtain the city information according to the altitude and longitude of city </span>
-
-**[Description]**
-
-Obtain the city information according to the longitude and latitude to display existing weather conditions.
-
-**[Method Prototype]**
-```java
-/**
- * Obtain the city information according to the altitude and longitude of city
- *
- * @param lon      Longitude
- * @param lat      Latitude
- * @param callback
- */
 void getCityByLatLng(String lon, String lat, IWiserResultCallback<PlaceFacadeBean> callback);
 ```
-**[Example Codes]**
+**Parameters**
+
+| Parameter        | Description  
+| ------ | ----- |
+| lon | Longitude |
+| lat |Latitude|
+| callback | callback|
+
+**Example**
+
 ```java
 WiserHomeSdk.getSceneManagerInstance().getCityByLatLng(
-      String.valueOf(longitude), //Longitude 
-      String.valueOf(latitude),   //Latitude 
-      new IWiserResultCallback<PlaceFacadeBean>() {
-          @Override
-          public void onSuccess(PlaceFacadeBean placeFacadeBean) {
-          }
-          @Override
-          public void onError(String errorCode, String errorMessage) {
-          }
+    String.valueOf(longitude), //Longitude
+    String.valueOf(latitude),   //Latitude
+    new IWiserResultCallback<PlaceFacadeBean>() {
+        @Override
+        public void onSuccess(PlaceFacadeBean placeFacadeBean) {
+        }
 
+        @Override
+        public void onError(String errorCode, String errorMessage) {
+        }
 });
 ```
-### Scene action
 
-Scene actions refer to control actions performed when conditions trigger. Actions executable in manual scenarios include [smart device type](#Device_Type), [group device type](#Group_Type), [automation scenario type](#Scene_Type) and [delay type](#Delay_Type). The executable actions of automation scenario include [smart device type](#Device_Type), [group device type](#Group_Type), [manual scene type](#Scene_Type), [automation scene type](#Scene_Type), [delay type](#Delay_Type) and [message type](#Message_Type). The tasks that users can set vary depending on the user’s device. Please note that not every product supports the scene.
+### <span id="GetCityByCityId">Get Cities Based on City Id</span>
 
-#### <span id="Device_Type">1.Create device type action</span>
+**Declaration**
 
-**[Description]**
+The city information is obtained according to the city id, and is used to display the existing weather conditions. The city id can be obtained in the get city list interface.
+
+```java
+void getCityByCityIndex(long cityId, IWiserResultCallback<PlaceFacadeBean> callback);
+```
+
+**Parameters**
+
+| Parameter        | Description  
+| ------ | ----- |
+| cityId |City Id|
+| callback | callback |
+
+**Example**
+
+```java
+WiserHomeSdk.getSceneManagerInstance().getCityByCityIndex(
+	cityId, //city id
+	new IWiserResultCallback<PlaceFacadeBean>() {
+		@Override
+		public void onSuccess(PlaceFacadeBean placeFacadeBean) {
+		}
+
+		@Override
+		public void onError(String errorCode, String errorMessage) {
+		}
+});
+```
+
+
+### Scene Task
+
+Scene task refer to control actions performed when conditions trigger. Tasks executable in manual scenarios include [smart device type](#Device_Type), [group device type](#Group_Type), [automation scenario type](#Scene_Type) and [delay type](#Delay_Type). The executable actions of automation scenario include [smart device type](#Device_Type), [group device type](#Group_Type), [manual scene type](#Scene_Type), [automation scene type](#Scene_Type), [delay type](#Delay_Type) and [message type](#Message_Type). The tasks that users can set vary depending on the user’s device. Please note that not every product supports the scene.
+
+
+### <span id="Device_Type">1.Create Device Type Action</span>
+
+**Declaration**
 
 It is used to create device type actions.
 
-**[Method Prototype]**
-
 ```java
-
-/**
- * It is used to create device type actions.
- *
- * @param devId device id
- * @param tasks to be implemented task format: { dpId: dp point value}
- *   For example:
- *   {
- *     "1": true,
- *   }
- * @returnScene action
- */
 SceneTask createDpTask(@NonNull String devId, HashMap<String, Object> tasks)
 
 ```
-**[Example Codes]**
+
+**Parameters**
+
+| Parameter        | Description  
+| ------ | ----- |
+| devId |device id|
+| tasks |tasks to be implemented task format: { dpId: dp point value}|
+
+
+**Example**
 
 ```java
 HashMap<String, Object> taskMap = new HashMap<>();
@@ -647,202 +622,111 @@ SceneTask task = WiserHomeSceneManager.getInstance().createDpTask(
 );
 ```
 
+### <span id="GetActionDevList">A List of Devices Supported by Obtaining Execution Action</span>
 
-### <span id="ObtainExecutionAction">A list of devices supported by obtaining execution action</span>
-
-**[Description]**
+**Declaration**
 
 Obtain a list of devices supporting scene actions for selecting to add to the action to be executed.
 
-**[Method Prototype]**
-
 ```java
-/**
- * Obtain a list of optional devices in the action
- * @param homeId Home id
- * @param callback
- */
 void getTaskDevList(long homeId, IWiserResultCallback<List<DeviceBean>> callback);
 ```
 
-Among, **DeviceBean****provides interfaces as follows:**
+**Parameters**
 
-```java
-/**
- *  Obtain name of Device
- * 
- * @return Device name 
- */
-public String getName() {
-      return name;
-}
-
-/**
- *  Product ID
- * 
- * @return product id
- */
-
-public String getProductId() {
-
-      return productId;
-
-}
+| Parameter        | Description 
+| ------ | ----- |
+| homeId |home id|
+| callback | callback |
 
 
+Among them, the main properties of `DeviceBean` are defined as follows:
 
-/**
- *  Obtain id of device
- * 
- * @return device id
- */
-
-public String getDevId() {
-
-      return devId;
-
-}
+|Field|Type| Description |
+| ------ | ------ | ----------- |
+| name | String | device name
+| productId | String | product id
+| devId | String | device id
+| iconUrl | String  | icon url
+| isOnline | Boolean  | Device online status, note: use this method to get device online status getIsOnline ()
 
 
-
-/**
- *  Obtain icon of device
- * 
- * @return icon address
- */
-
-public String getIconUrl() {
-
-       return iconUrl;
-
- }
-
-/**
- * device is online
- * @return device is online
- */
- 
-public Boolean getIsOnline()
-
-```
-**[Example Codes]**
+**Example**
 
 ```java
 WiserHomeSdk.getSceneManagerInstance().getTaskDevList(new IWiserResultCallback<List<DeviceBean>>() {
-      @Override
-      public void onSuccess(List<DeviceBean> deviceBeans) {
-      }
-      @Override
-      public void onError(String errorCode, String errorMessage) {
-      }
+    @Override
+    public void onSuccess(List<DeviceBean> deviceBeans) {
+    }
 
+    @Override
+    public void onError(String errorCode, String errorMessage) {
+    }
 });
 ```
-### Obtain executable actions based on device id
 
-**[Description]**
+### Obtain Executable Actions Based on Device Id
 
-It is used to obtain the tasks executed by the device when creating an action. The device id can be obtained from the [a list of devices supported by obtaining execution action](#ObtainExecutionAction)
+**Declaration**
 
-**[Method Prototype]**
+It is used to obtain the tasks executed by the device when creating an action. The device id can be obtained from the [a list of devices supported by obtaining execution action](#GetActionDevList)
 
 ```java
-/**
-* Obtain what the device can execute
-* @param devId    device id
-* @param callback
-*/
 void getDeviceTaskOperationList(String devId, IWiserResultCallback<List<TaskListBean>> callback);
-Among, TaskListBean provides interfaces as follows:
-/**
- *  obtain the name of dp points for display interface.
- *
- * @return name of dp points
- */
-public String getName() {
-    return name;
-}
-
-
-
-/**
- *
- *  Obtain dpId
- * @return dpId
- */
-
-public long getDpId() {
-
-    return dpId;
-
-}
-
-
-
-/**
- * Obtain the operation configured by the dp point
- *
- *   Format:
- *     {
- *       {true, “on"},
- *       {false, "off"}
- *     }
- *
- * @return 
- */
-
-public HashMap<Object, String> getTasks() {
-    return tasks;
-}
-/**
- * Obtain the type bool, value, enum, etc. of the condition.
-*/
-public String getType() {
-    return type;
-
-}
 ```
-**[Example Codes]**
+
+**Parameters**
+
+| Parameter        | Description 
+| ------ | ----- |
+| devId | device id|
+| callback |callback |
+
+
+Among them, the main properties of `TaskListBean` are defined as follows:
+
+|Field|Type| Description |
+| ------ | ------ | ----------- |
+| name |Sting| dp point name for interface display
+| dpId |long| Device dpId
+| tasks | HashMap&lt;Object, String&gt;  | Obtain the operation configured by the dp point,Format::{true, "on"},{false, "off"}
+| type | String  |  Type of condition: bool, value, enum, etc.
+
+
+**Example**
 
 ```java
 WiserHomeSdk.getSceneManagerInstance().getDeviceTaskOperationList(
-    devId,      //Device id
+    devId, //device id
     new IWiserResultCallback<List<TaskListBean>>() {
         @Override
         public void onSuccess(List<TaskListBean> conditionActionBeans) {
         }
-       @Override
-        public void onError(String errorCode, String errorMessage) {
-       }
 
+        @Override
+        public void onError(String errorCode, String errorMessage) {
+        }
 });
 ```
-#### <span id="Group_Type">2.Create group device type action</span>
+### <span id="Group_Type">2.Create Group Device Type Action</span>
 
-**[Description]**
+**Declaration**
 
 It is used to create group device type actions.
 
-**[Method Prototype]**
-
 ```java
-
-/**
- * It is used to create group device type actions.
- *
- * @param group id
- * @param tasks to be implemented task format: { dpId: dp point value}
- *   For example:
- *   {
- *     "1": true,
- *   }
- * @returnScene action
- */
-SceneTask createDpTask(@NonNull long groupId, HashMap<String, Object> tasks)
+SceneTask createDpGroupTask(@NonNull long groupId, HashMap<String, Object> tasks);
 
 ```
+**Parameters**
 
-**[Example Codes]**
+| Parameter        | Description 
+| ------ | ----- |
+| groupId | group id|
+| tasks |tasks to be implemented task format: { dpId: dp point value}|
+
+
+**Example**
 
 ```java
 HashMap<String, Object> taskMap = new HashMap<>();
@@ -852,108 +736,124 @@ WiserHomeSceneManager.getInstance().createDpGroupTask(
 	taskMap 	//Device action
 );
 ```
+### <span id="GetGroupActionDevList">A List of Group Devices to Get Execution Action Support</span>
 
-#### <span id="GetGroupActionDevList">A List of Group Devices to Get Execution Action Support</span>
-
-**[Description]**
+**Declaration**
 
 Obtain a list of devices that support scenario actions, including common devices and group devices, for selecting the actions to be added to.
 
-**[Method Prototype]**
 
 ```java
-/**
-* Obtain a list of devices that support scenario actions, including groups and common devices
-* @param homeId
-* @param callback 
-*/
 getTaskDevAndGoupList(long homeId, IWiserResultCallback<SceneTaskGroupDevice> callback)
 ```
-Among, `SceneTaskGroupDevice` provides interfaces as follows:
+**Parameters**
 
+| Parameter        | Description 
+| ------ | ----- |
+| homeId | home id|
+| callback | callback |
+
+
+Among them, the main properties of `SceneTaskGroupDevice` are defined as follows:
+
+|Field|Type| Description |
+| ------ | ------ | ----------- |
+| devices |List&lt;DeviceBean&gt; |List of common devices
+| goups |List&lt; GroupBean&gt;| Group device list
+
+**Example**
 
 ```java
+WiserHomeSdk.getSceneManagerInstance().getTaskDevAndGoupList(homeId, new IWiserResultCallback<SceneTaskGroupDevice>() {
+                @Override
+                public void onSuccess(SceneTaskGroupDevice sceneTaskGroupDevice) {
+                    List<DeviceBean> deviceBeans = sceneTaskGroupDevice.getDevices();
+                    List<GroupBean> groupBeans = sceneTaskGroupDevice.getGoups();
+                    ...
+                }
 
-/**
-*  obtain a list of common devices
-*/
-public List<DeviceBean> getDevices() {
-    return devices;
-}
-/**
-*  obtain a list of group devices
-*/
-public List<GroupBean> getGoups() {
-    return goups;
-}
-
+                @Override
+                public void onError(String errorCode, String errorMessage) {
+                    ...
+                }
+            });
 ```
 
 
-#### Obtain executable actions based on group id
+### Obtain Executable Actions Based on Group Id
 
-**[Description]**
+**Declaration**
 
 It is used to obtain the tasks executed by the group device when creating an action. The group id can be obtained from the [a list of group devices to get execution action support](#GetGroupActionDevList)
 
-**[Method Prototype]**
 
 ```java
-/**
-* Obtain executable actions based on group id
-*
-* @param goupId   
-* @param callback
-*/
 void getDeviceTaskOperationListByGroup(String goupId, IWiserResultCallback<List<TaskListBean>> callback)
 ```
+**Parameters**
 
-#### <span id="Scene_Type">3.Create scenario type action</span>
+| Parameter        | Description 
+| ------ | ----- |
+| groupId | group id|
+| callback | callback |
 
-**[Description]**
-
-Scenario type actions are used to create scene type actions, including manual and automated scenarios. Parameters can be obtained through the [scenario list interface](#ObtainSceneList)
-
-**[Method Prototype]**
+**Example**
 
 ```java
-/**
- * create scene type action
- * @sceneBean scene object
- * @return sceneTask
- */
+WiserHomeSdk.getSceneManagerInstance().getDeviceTaskOperationListByGroup(groupId, new IWiserResultCallback<List<TaskListBean>>() {
+                @Override
+                public void onSuccess(List<TaskListBean> result) {
+                    
+                }
+
+                @Override
+                public void onError(String errorCode, String errorMessage) {
+
+                }
+            });
+```
+
+### <span id="Scene_Type">3.Create Scenario Type Action</span>
+
+**Declaration**
+
+Scenario type actions are used to create scene type actions, including manual and automated scenarios. Parameters can be obtained through the [scenario list interface](#GetSceneList)
+
+
+```java
 SceneTask createSceneTask(SceneBean sceneBean);
 
 ```
+**Parameters**
 
-**[Example Codes]**
+| Parameter        | Description 
+| ------ | ----- |
+| sceneBean | scene object|
+
+**Example**
 
 ```java
 WiserHomeSceneManager.getInstance().createSceneTask(scnenBean);
 ```
+### <span id="Delay_Type">4.Create Delay Type Action</span>
 
-#### <span id="Delay_Type">4.Create delay type action</span>
+**Declaration**
 
-**[Description]**
-
-It is used to create delay type actions.
-
-**[Method Prototype]**
+Used to create a delay-type action. SDK version supports maximum delay time of 300 minutes after 3.13.3, and only supports 59 minutes and 59s before 3.13.3
 
 ```java
-
-/**
- * Create delay type action
- * Maximum support for 59m59s
- * @param minute minutes
- * @param second seconds
- * @return sceneTask
- */
 SceneTask createDelayTask(int minute, int second);
 
 ```
+**Parameters**
 
-**[Example Codes]**
+| Parameter        | Description 
+| ------ | ----- |
+| minute | minutes|
+| second | seconds|
+
+
+**Example**
 
 ```java
 WiserHomeSceneManager.getInstance().createDelayTask(
@@ -962,301 +862,77 @@ WiserHomeSceneManager.getInstance().createDelayTask(
 );
 ```
 
+### <span id="Message_Type">5、Create Message Type Action</span>
 
-#### <span id="Message_Type">5.Create message type action</span>
+**Declaration**
 
-**[Description]**
-
-It is used to create message type actions.
-
-**[Method Prototype]**
+Used to create a message type action.
 
 ```java
-/**
- * create message type action
- * @return
- */
 SceneTask createPushMessage();
-
 ```
 
-**[Example Codes]**
+
+**Example**
 
 ```java
 WiserHomeSceneManager.getInstance().createPushMessage();
 ```
 
-## <span id="Scene_operation">Scene Operation</span>
-WiserHomeSdk provides four operations for creating, modifying, executing, and deleting a single scene. In addition to creating other operations, the scene ID needs to be initialized. The scene ID can be obtained from the interface of [obtaining the scene list interface.](#ObtainSceneList)
+### Sort Scene
 
-### Create Scene
-
-**[Description]**
-
-It is used to assemble conditions and actions into a scene and create a new scene, and then returns the scene data after success. There are two creation methods, and the only difference is whether there are stickyOnTop parameters.
-
-**[Method Prototype]**
-
-```java
-/**
- * Create Scene
- *
- * @param homeId	  Home id
- * @param name      Scene name 
- * @param stickyOnTop shows in the home page or not
- * @param conditions Scene triggering conditions {@link SceneCondition}
- * @param tasks     Scene task {@link SceneTask}
- * @param matchType Scene condition and/or relationship  SceneBean.MATCH_TYPE_OR represents that it satisfies any conditions, default value; SceneBean.MATCH_TYPE_AND represents that it satisfies all conditions
- * @param callback   callback
-
- */
-
-public void createScene(long homeId, String name, boolean stickyOnTop, String background, List<SceneCondition> conditions, List<SceneTask> tasks,int matchType, final IWiserResultCallback<SceneBean> callback) ;
-
-/**
- * Create Scene
- *
- * @param homeId	  Home id
- * @param name      Scene name 
- * @param conditions Scene triggering conditions {@link SceneCondition}
- * @param tasks     Scene task {@link SceneTask}
- * @param matchType Scene condition and/or relationship  SceneBean.MATCH_TYPE_OR represents that it satisfies any conditions, default value; SceneBean.MATCH_TYPE_AND represents that it satisfies all conditions
- * @param callback   callback
- */
-
-public void createScene(long homeId, String name, String background, List<SceneCondition> conditions, List<SceneTask> tasks,int matchType, final IWiserResultCallback<SceneBean> callback) ;
-```
-**[Example Codes]**
-
-```java
-WiserHomeSdk.getSceneManagerInstance().createScene(
-	 "100001"
-    “Morning", // Scene name
-    true,  //Show it in the home page or not
-    conditions, //condition
-    tasks,     //task
-    SceneBean.MATCH_TYPE_AND, //Implement condition type
-    new IWiserResultCallback<SceneBean>() {
-        @Override
-        public void onSuccess(SceneBean sceneBean) {
-            Log.d(TAG, "createScene Success");
-        }
-        @Override
-        public void onError(String errorCode, String errorMessage) {
-        }
-});
-```
-### Modify the scene
-
-**[Description]**
-
-It is used to modify the scene. After it succeeded, it will return to new scene data.
-
-**[Method Prototype]**
-
-```java
-
-/**
- * Modify the scene
- * 
- * @param sceneReqBean Scene data class
- * @param callback
- */
-
-void modifyScene(SceneBean sceneReqBean, IWiserResultCallback<SceneBean> callback);
-```
-Note: The interface can only be used to modify the scene. Do not transmit into the newly created SceneBean object.
-
-**[Example Codes]**
-
-```java
-sceneBean.setName("New name");  //Change Scene name 
-sceneBean.setConditions(Collections.singletonList(condition)); //Change Scene condition
-sceneBean.setActions(tasks); //Change Scene action
-String sceneId = sceneBean.getId();  //Get the Scene id to initialize
-WiserHomeSdk.newSceneInstance(sceneId).modifyScene(
-    sceneBean,  //Modified Scene data class
-    new IWiserResultCallback<SceneBean>() {
-        @Override
-        public void onSuccess(SceneBean sceneBean) {
-            Log.d(TAG, "Modify Scene Success");
-        }
-        @Override
-        public void onError(String errorCode, String errorMessage) {
-        }
-
-});
-```
-### Execute scene
-
-**[Description]**
-
-It is used to execute manual scene.
-
-
-Note: This method only sends commands to the cloud execution scenario. If the specific device is executed successfully, you need to monitor the device's dp point change through WiserHomeSdk.newDeviceInstance(devId).registerDevListener().
-
-**[Method Prototype]**
-
-```java
-/**
- * Perform scene actions
- *
- * @param callback
- */
-void executeScene(IResultCallback callback);
-```
-**[Example Codes]**
-
-```java
-String sceneId = sceneBean.getId();  
-WiserHomeSdk.newSceneInstance(sceneId).executeScene(new IResultCallback() {
-    @Override
-    public void onSuccess() {
-        Log.d(TAG, "Excute Scene Success");
-    }
-    @Override
-    public void onError(String errorCode, String errorMessage) {
-    }
-});
-```
-###  Delete scene
-
-**[Description]**
-
-For deleting scene
-
-**[Method Prototype]**
-
-```java
-/**
- * Delete Scene
- *
- * @param callback
- */
-void deleteScene(IResultCallback callback);
-```
-**[Example Codes]**
-
-```java
-String sceneId = sceneBean.getId();  
-WiserHomeSdk.newSceneInstance(sceneId).deleteScene(new 
-IResultCallback() {
-    @Override
-    public void onSuccess() {
-        Log.d(TAG, "Delete Scene Success");
-    }
-    @Override
-    public void onError(String errorCode, String errorMessage) {
-    }
-
-});
-```
-### Turn on and turn off the automation scene
-
-**[Description]**
-
-It is used to turn on or off the automatic scene.
-
-**[Method Prototype]**
-
-```java
-/**
- * Turn on automation scene
- * @param sceneId  
- * @param callback
- */
-void enableScene(String sceneId, final IResultCallback callback);
-
-/**
- * Turn off the automation scene
- * @param sceneId  
- * @param callback
- */
-void disableScene(String sceneId, final IResultCallback callback);
-```
-**[Example Codes]**
-
-```java
-String sceneId = sceneBean.getId();  
-WiserHomeSdk.newSceneInstance(sceneId).enableScene(sceneId,new 
-IResultCallback() {
-    @Override
-    public void onSuccess() {
-       Log.d(TAG, "enable Scene Success");
-    }
-    @Override
-    public void onError(String errorCode, String errorMessage) {
-    }
-
-});
-
-
-
-WiserHomeSdk.newSceneInstance(sceneId).disableScene(sceneId,new 
-
-IResultCallback() {
-    @Override
-    public void onSuccess() {
-        Log.d(TAG, "disable Scene Success");
-    }
-    @Override
-    public void onError(String errorCode, String errorMessage) {
-    }
-
-});
-```
-### Sort scene
-
-**[Description]**
+**Declaration**
 
 Manual scene or automation scene sorting. Note: Manual or automation scenes can only be sorted separately and cannot be shuffled.
 
-**[Method Prototype]**
-
 ```java
-/**
- * Scene sorting
- * @param homeId family id
- * @param sceneIds  Sorted id list for manual or automation scenes 
- * @param callback    callback
- */
 void sortSceneList(long homeId, List<String> sceneIds, IResultCallback callback)
 ```
-**[Example Codes]**
+
+
+**Parameters**
+
+| Parameter        | Description 
+| ------ | ----- |
+| homeId |home Id|
+| sceneIds |Scene id list|
+| callback |callback|
+
+
+**Example**
 
 ```java
 WiserHomeSdk.getSceneManagerInstance().sortSceneList(
-    homeId, //Home list
+    homeId, //home id
     sceneIds,//Scene id list
     new IResultCallback() {
         @Override
         public void onSuccess() {
         }
+
         @Override
         public void onError(String errorCode, String errorMessage) {
         }
-
 });
 ```
-### Scene Background Images
+###  <span id="GET_BGS">Scene Background Images</span>
 
-**[Description]**
+**Declaration**
 
 Get scene background images
 
-
-**[Method Prototype]**
-
 ```java
-/**
-* 
-* @param callback callback
-*/
  void getSceneBgs(IWiserResultCallback<ArrayList<String>> callback);
 ```
 
-**[Example Codes]**
+**Parameters**
+
+| Parameter        | Description 
+| ------ | ----- |
+| callback | callback |
+
+
+**Example**
 
 ```java
 WiserHomeSdk.getSceneManagerInstance().getSceneBgs(new IWiserResultCallback<ArrayList<String>>() {
@@ -1272,15 +948,389 @@ WiserHomeSdk.getSceneManagerInstance().getSceneBgs(new IWiserResultCallback<Arra
     });
 ```
 
+
+## Scene Operation
+
+WiserHomeSdk provides four operations for creating, modifying, executing, and deleting a single scene. In addition to creating other operations, the scene ID needs to be initialized. The scene ID can be obtained from the interface of [obtaining the scene list interface.](#GetSceneList)
+
+
+### Create Scene
+
+**Declaration**
+
+To add a scene, you need to pass in the Id of the family, the name of the scene, whether it is displayed on the homepage, the url of the background image, the condition list, the task list (at least one task), and the precondition list (valid time period, can not pass, the default is effective all day) , Executed when either or all of the conditions are met. You can also set only the name and task, background image, and no conditions, but you need to perform it manually.
+
+
+**Parameters**
+
+| Parameter        | Description 
+| ------ | ----- |
+| homeId | Home Id |
+| name | Scene name |
+| stickyOnTop |  whether it is displayed on the homepage |
+| background | the url of the background image，Can only use the background image provided in the [Get Scene Background Picture List] (#GET_BGS) interface|
+| preConditions | Effective time period, which is passed in as a set of pre-condition objects, which may not be passed. |
+| conditions | Scene trigger conditions  |
+| tasks | Scene execution tasks |
+| matchType |Condition match type, "AND" or "OR", default value: SceneBean.MATCH\_TYPE\_OR means that any condition is fulfilled, SceneBean.MATCH\_TYPE\_AND means that all conditions are met|
+| callback |callback|
+
+The `PreCondition` property is defined as follows
+
+|Field|Type| Description |
+| ------ | ------ | ----------- |
+| id |Sting| The effective time period id. After the scene is created, it is automatically generated in the cloud, without manual setting.
+| condType |String| Please set PreCondition.TYPE\_TIME\_CHECK at present, which means the preset condition is the effective time period type
+| expr | PreConditionExpr | Precondition rule object
+
+
+The `PreConditionExpr` property is defined as follows
+
+|Field|Type| Description |
+| ------ | ------ | ----------- |
+| loops | String | A 7-character string, each of which indicates the day of the week, the first of which indicates Sunday, the second of which indicates Monday, and so on, and which days the automation takes effect. 0 means not selected, 1 means selected. For example, only Monday and Tuesday are selected: "0110000". If neither of them is selected, it means it only takes effect once. Format: "0000000"|
+| start |String| Start time (only the `TIMEINTERVAL_CUSTOM` custom type setting will take effect)
+| end | String | End time (only the `TIMEINTERVAL_CUSTOM` custom type setting will take effect)
+| timeInterval | String | Effective time period type, `PreCondition.TIMEINTERVAL_ALLDAY` all day,` TIMEINTERVAL_NIGHT` night, `TIMEINTERVAL_DAYTIME` daytime,` TIMEINTERVAL_CUSTOM` custom |
+| cityId | String | City Id, which can be obtained through [Get City List] (#GetCityList)
+| timeZoneId | String | Effective time zone
+| cityName | String | City ​​name
+
+**Example**
+
+```java
+//Data creation in effective period, can be empty
+PreCondition preCondition = new PreCondition();
+PreConditionExpr expr = new PreConditionExpr();
+expr.setCityName("hangzhou");
+expr.setCityId("xxxxx");//cityId Available via city list interface
+expr.setStart("00:00");
+expr.setEnd("23:59");
+expr.setLoops("1111111");
+expr.setTimeInterval(PreCondition.TIMEINTERVAL_ALLDAY);
+preCondition.setCondType(PreCondition.TYPE_TIME_CHECK);
+expr.setTimeZoneId(TimeZone.getDefault().getID());
+preCondition.setExpr(expr);
+List<PreCondition> preConditions = new ArrayList<>();
+preConditions.add(preCondition);
+
+WiserHomeSdk.getSceneManagerInstance().createScene(
+	 100001,
+    "Morning", //scene name
+    "https://images.png"
+    true,  //Whether to display on the homepage
+    preConditions, //Effective period, may not be transmitted
+    conditions, //condition
+    tasks,     //task
+    SceneBean.MATCH_TYPE_AND, //Execution condition type
+    new IWiserResultCallback<SceneBean>() {
+        @Override
+        public void onSuccess(SceneBean sceneBean) {
+            Log.d(TAG, "createScene Success");
+        }
+
+        @Override
+        public void onError(String errorCode, String errorMessage) {
+        }
+});
+```
+
+###  Modify The Scene
+
+**Declaration**
+
+It is used to modify the scene. After it succeeded, it will return to new scene data.
+
+```java
+void modifyScene(SceneBean sceneReqBean, IWiserResultCallback<SceneBean> callback);
+```
+
+**Parameters**
+
+| Parameter        | Description 
+| ------ | ----- |
+| sceneReqBean | Modified scene object |
+
+
+**Example**
+
+```java
+sceneBean.setName("New name");  //Change Scene name
+sceneBean.setConditions(Collections.singletonList(condition)); //Change scene conditions
+sceneBean.setActions(tasks); //Change scene action
+
+String sceneId = sceneBean.getId();  //Get the Scene id to initialize
+WiserHomeSdk.newSceneInstance(sceneId).modifyScene(
+    sceneBean,  //Modified Scene data class
+    new IWiserResultCallback<SceneBean>() {
+        @Override
+        public void onSuccess(SceneBean sceneBean) {
+            Log.d(TAG, "Modify Scene Success");
+        }
+
+        @Override
+        public void onError(String errorCode, String errorMessage) {
+        }
+});
+```
+
+
+###  Delete Scene
+
+
+
+**Declaration**
+
+For deleting scene
+
+```java
+void deleteScene(IResultCallback callback);
+```
+
+**Parameters**
+
+| Parameter        | Description 
+| ------ | ----- |
+| callback | callback |
+
+**Example**
+
+```java
+String sceneId = sceneBean.getId();  
+
+WiserHomeSdk.newSceneInstance(sceneId).deleteScene(new 
+IResultCallback() {
+    @Override
+    public void onSuccess() {
+        Log.d(TAG, "Delete Scene Success");
+    }
+
+    @Override
+    public void onError(String errorCode, String errorMessage) {
+    }
+});
+```
+
+### Execute Scene
+
+**Declaration**
+
+It is used to execute manual scene.
+
+
+Note: This method only sends commands to the cloud execution scenario. If the specific device is executed successfully, you need to monitor the device's dp point change through WiserHomeSdk.newDeviceInstance(devId).registerDevListener().
+
+
+```java
+void executeScene(IResultCallback callback);
+```
+
+**Parameters**
+
+
+| Parameter        | Description 
+| ------ | ----- |
+| callback | callback |
+
+**Example**
+
+```java
+String sceneId = sceneBean.getId();  
+WiserHomeSdk.newSceneInstance(sceneId).executeScene(new IResultCallback() {
+    @Override
+    public void onSuccess() {
+        Log.d(TAG, "Excute Scene Success");
+    }
+
+    @Override
+    public void onError(String errorCode, String errorMessage) {
+    }
+});
+```
+
+### Turn On and Turn Off The Automation Scene
+
+**Declaration**
+
+
+It is used to turn on or off the automatic scene.
+
+
+```java
+void enableScene(String sceneId, final IResultCallback callback);
+
+void disableScene(String sceneId, final IResultCallback callback);
+```
+
+
+**Parameters**
+
+| Parameter        | Description 
+| ------ | ----- |
+| sceneId |sceneId |
+| callback | callback |
+
+**Example**
+
+```java
+String sceneId = sceneBean.getId();  
+
+WiserHomeSdk.newSceneInstance(sceneId).enableScene(sceneId,new 
+IResultCallback() {
+    @Override
+    public void onSuccess() {
+        Log.d(TAG, "enable Scene Success");
+    }
+
+    @Override
+    public void onError(String errorCode, String errorMessage) {
+    }
+});
+
+WiserHomeSdk.newSceneInstance(sceneId).disableScene(sceneId,new 
+IResultCallback() {
+    @Override
+    public void onSuccess() {
+        Log.d(TAG, "disable Scene Success");
+    }
+
+    @Override
+    public void onError(String errorCode, String errorMessage) {
+    }
+});
+```
+
+
 ### Erase
 
-**[Description]**
+**Declaration**
+
 
 If the user exits the activity of the scene, the scene destruction method should be invoked to reclaim the memory and enhance the experience.
 
-**[Example Codes]**
+
+**Example**
 
 ```java
 WiserHomeSdk.getSceneManagerInstance().onDestroy();
+
 WiserHomeSdk.newSceneInstance(sceneId).onDestroy();
+```
+
+### Register
+
+**Declaration**
+
+The monitoring of scene addition, editing, deletion, execution, opening and closing operations
+
+```java
+void registerSmartUpdateListener(ISmartUpdateListener listener);
+```
+
+**Parameters**
+
+| Parameter        | Description |
+| ------ | ----- |
+| listener |scene status listener |
+
+`ISmartUpdateListener` interface is as follows:
+
+```java
+public interface ISmartUpdateListener {
+    /**
+     * Automatic scene update
+     */
+    void onSmartUpdateListener();
+
+    /**
+     * Recommended
+     */
+    void onCollectionsUpdateListener();
+}
+```
+
+**Example**
+
+```java
+WiserHomeSdk.getSceneManagerInstance().registerSmartUpdateListener(new ISmartUpdateListener() {
+            @Override
+            public void onSmartUpdateListener() {
+
+            }
+
+            @Override
+            public void onCollectionsUpdateListener() {
+
+            }
+        });
+```
+
+### Unregister
+
+When you do not need to listen to the scene, you can unregister the listener
+
+**Example**
+
+```java
+WiserHomeSdk.getSceneManagerInstance().unRegisterSmartUpdateListener(mSmartUpdateListener);
+```
+
+### Registration Scene Information Change listener
+
+**Declaration**
+
+Scene addition, editing, deletion, execution, monitoring of opening and closing operations
+
+```java
+void registerSmartUpdateListener(ISmartUpdateListener listener);
+```
+
+**Parameters**
+
+| Parameter | Description |
+| --------- | ----------- |
+| listener  | listener    |
+
+`ISmartUpdateListener` 接口如下：
+
+```java
+public interface ISmartUpdateListener {
+    /**
+     * Automatic scene update
+     */
+    void onSmartUpdateListener();
+
+    /**
+     * Recommended scenes to add to the collection update
+     */
+    void onCollectionsUpdateListener();
+}
+```
+
+**Example**
+
+```java
+WiserHomeSdk.getSceneManagerInstance().registerSmartUpdateListener(new ISmartUpdateListener() {
+            @Override
+            public void onSmartUpdateListener() {
+
+            }
+
+            @Override
+            public void onCollectionsUpdateListener() {
+
+            }
+        });
+```
+
+### 1.4.8. Unregister Scene Information Change Listener
+
+**Declaration**
+
+When the scene information change listener is not required, unregister the listener.
+
+**Example**
+
+```java
+WiserHomeSdk.getSceneManagerInstance().unRegisterSmartUpdateListener(mSmartUpdateListener);
 ```

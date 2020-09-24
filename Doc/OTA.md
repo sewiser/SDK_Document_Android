@@ -1,130 +1,141 @@
-# Firmware Upgrade
+# Firmware upgrade
 
-**[Description]**
+Firmware upgrades are mainly used to repair device bugs and add new device features. There are two main types of firmware upgrades. The first is device upgrade and the second is MCU upgrade. The upgraded interface is located in IwiserOta.
+Zigbe sub-device upgrades are supported from SDK version 2.9.1.
 
-The firmware upgrade is mainly used to fix device bugs and add new device functions. There are two main types of firmware upgrades, i.e., device upgrade and MCU upgrade. The interface for upgrade is located in IWiserOta.Zigbee sub-device OTA is available on 2.9.1 and the follow-up version.
+## Query firmware upgrade information
 
-## Querying Firmware Upgrade Information**
+**Declaration**
 
-**[Method Invocation]**
+wifi, zigbee gateway, camera and other equipment initialization interface
 
 ```java
-/**
- *	the init OTA method of wifi、zigbee gateway、camera ect.  Attention:This two constructor methods are not Singleton Pattern
- * @param devId  device id
- * @return
- */
-IWiserOta newOTAInstance(String devId)
-
-/**
- * the init OTA method of zigbee sub-device
- * @param meshId zigbee gateway id
- * @param devId zigbee sub-device id
- * @param nodeId zigbee sub-device mac address（get from the DeviceBean of zigbee sub-device）
- * @return
- */
-IWiserOta newOTAInstance(String meshId, String devId, String nodeId);
-
+IWiserOta newOTAInstance (String devId)
 ```
 
+**Parameters**
+
+| Parameters | Description |
+| ----- | ------ |
+| devId | device id |
+
+**Declaration**
+
+Child device initialization interface
+
 ```java
+IWiserOta newOTAInstance (String meshId, String devId, String nodeId);
+```
 
-// Obtain firmware upgrade information
+**Parameters**
 
-WiserHomeSdk.newOTAInstance(mDevId).getOtaInfo(new IGetOtaInfoCallback({
-	@Override
-	void onSuccess(List<UpgradeInfoBean> list){
-	
-	}
-	@Override
-	void onFailure(String code, String error);	
+|Parameters | Description |
+| ------ | ---------------------------------------------- |
+|meshId | zigbee gateway id |
+|devId | zigbee child device id |
+|nodeId | igbee sub-device mac address (obtained from the DeviceBean of the sub-device) |
 
+**Example**
+
+Obtaining Firmware Upgrade Information
+
+```java
+WiserHomeSdk.newOTAInstance (mDevId) .getOtaInfo (new IGetOtaInfoCallback ({
+@Override
+void onSuccess (List <UpgradeInfoBean> list) {
+Ranch
+}
+@Override
+void onFailure (String code, String error);
+Ranch
 });
 
-WiserHomeSdk.newOTAInstance("xxxmeshId","xxxdevId","xxxmac address").getOtaInfo(new IGetOtaInfoCallback({
-	@Override
-	void onSuccess(List<UpgradeInfoBean> list){
-	
-	}
-	@Override
-	void onFailure(String code, String error);
-	
+WiserHomeSdk.newOTAInstance ("xxxmeshId", "xxxdevId", "xxxmac address"). GetOtaInfo (new IGetOtaInfoCallback ({
+@Override
+void onSuccess (List <UpgradeInfoBean> list) {
+Ranch
+}
+@Override
+void onFailure (String code, String error);
+Ranch
 });
 
-
-UpgradeInfoBean returns information about the firmware upgrade, including:
-	private int upgradeStatus;// upgrade status (0: no new version 1: new version available 2: upgrading)
-    private String version;// latest version
-    private String currentVersion;//current version
-    private int timeout;// time-out period (unit: s)
-    private int upgradeType;//0: app reminding upgrade; 2-app carrying out forced upgrade; 3-detecting upgrade
-    private int type;//0: wifi device; 1: bluetooth device; 2: GPRS device; 3: zigbee device (currently only zigbee gateway available); 9: MCU
-    private String typeDesc;//module description
-    private long lastUpgradeTime;// last upgrade time (unit: ms)
 ```
-**[Example Codes]**
+
+`UpgradeInfoBean` returns firmware upgrade information, providing the following information
+
+|Field | Type | Description |
+| --------------- | ------ | ------------------------------------------ |
+|upgradeStatus | int | upgrade status, 0: no new version 1: new version available 2: in upgrade |
+| version | String | Latest version |
+| currentVersion | String | Current version |
+timeout | int | timeout, unit: second |
+upgradeType | int | 0: app reminder upgrade 2-app forced upgrade 3-detect upgrade
+| type | int | 0: wifi device 1: Bluetooth device 2: GPRS device 3: zigbee device 9: MCU |
+| typeDesc | String | module description |
+| lastUpgradeTime | long | last upgrade time in milliseconds |
+
+**Example**
 
 ```java
+iWiserOta.getOtaInfo (new IGetOtaInfoCallback () {
+    @Override
+    public void onSuccess (List <UpgradeInfoBean> list) {
+        
+        }
+    }
 
-iWiserOta.getOtaInfo(new IGetOtaInfoCallback() {
-    @Override
-    public void onSuccess(List<UpgradeInfoBean> list) {
-        
-        }
-    }
-    @Override
-    public void onFailure(String code, String error) {
-
-        L.e(TAG, "check error " + code + "----error=" + error);
-    }
-        });
+    @Override
+    public void onFailure (String code, String error) {
+        L.e (TAG, "check error" + code + "---- error =" + error);
+    }
+        });
 ```
-## Setting Upgrade Status Callback
 
-**[Description]**
+## Set upgrade status callback
 
-Before ota, registration of listener is required to obtain the upgrade status in real time.
+Before ota, you need to register for monitoring to get the upgrade status in real time
 
-**[Method Invocation]**
+**Example**
 
 ```java
+// otaType The device type to be upgraded, the same as the type field of `UpgradeInfoBean`
+iWiserOta.setOtaListener (new IOtaListener () {
+    @Override
+    public void onSuccess (int otaType) {
+        
+    }
 
-// otaType: type of device to be upgraded (identical to the type field of ‘UpgradeInfoBean’)
+    @Override
+    public void onFailure (int otaType, String code, String error) {
 
-iWiserOta.setOtaListener(new IOtaListener() {
-    @Override
-    public void onSuccess(int otaType) {
-        
-	}
-    @Override
-    public void onFailure(int otaType, String code, String error) {
-    }
+    }
 
-    @Override
-    public void onProgress(int otaType, int progress) {
-    }
+    @Override
+    public void onProgress (int otaType, int progress) {
 
+    }
 });
 ```
-**Start Upgrading**
 
-**[Description]**
+## Start the upgrade
 
-Invoke to start the upgrade, and the registered ota listener after the invoking will return the upgrade status to facilitate the developer building UI.
+ Call this method to start the upgrade. The ota listener registered after the call will return the upgrade status so that the developer can build the UI.
 
-**[Method Invocation]**
+**Example**
 
 ```java
-iWiserOta.startOta();
+iWiserOta.startOta ();
 ```
 
-**Destroy**
+## Destroy
 
-**[Description]**
+Destroy after leaving the upgrade page and reclaim memory.
 
-After exiting the upgrade page, destroying is required to release the memory.
+**Example**
 
-**[Method Invocation]**
 ```java
-iWiserOta.onDestroy();
+iWiserOta.onDestroy ();
 ```
+
+####

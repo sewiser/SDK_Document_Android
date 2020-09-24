@@ -142,11 +142,6 @@ public interface IWiserHomeStatusListener {
 */
 void unRegisterHomeStatusListener(IWiserHomeStatusListener listener);
 ```
-
-## Query the Device List of the Same Product and Supports Group Under the User.
-```java
-void queryDeviceListToAddGroup(String productId, final IWiserResultCallback<List<GroupDeviceBean>> callback);
-```
 ## Destroy
 ```java
 void onDestroy();

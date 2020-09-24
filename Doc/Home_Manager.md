@@ -1,9 +1,9 @@
-## Home Management Class
+## Home Management
 
-The IWiserHomeManager provides changes related to creating home, obtaining the home list and monitoring home, and it can be obtained by invoking the `WiserHomeSdk.getHomeManagerInstance()`.
+The IWiserHomeManager provides operations related to creating home, obtaining the home list and monitoring home status change. It can be obtained by invoking the `WiserHomeSdk.getHomeManagerInstance()`.
 
 ## HomeBean Field Information
-| field | type | describe |
+| Field | Type | Describe |
 | --- | --- | --- |
 | name | String  | The home name|
 | lon | double   | The home lon |
